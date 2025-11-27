@@ -28,6 +28,7 @@
 		<maven.dependency.mockito.version>5.20.0</maven.dependency.mockito.version>
 		<maven.dependency.jakarta.servlet-api.version>6.1.0</maven.dependency.jakarta.servlet-api.version>
 		<maven.dependency.jjwt.version>0.13.0</maven.dependency.jjwt.version>
+		<start-class>org.delcom.app.Application</start-class>
 	</properties>
 
 	<dependencies>
