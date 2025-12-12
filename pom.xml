@@ -157,12 +157,13 @@
 				</configuration>
 			</plugin>
 
-			<!-- 4. JaCoCo Plugin (SUDAH DIPERBAIKI DENGAN RULES) -->
+			<!-- 4. JaCoCo Plugin (SUDAH DIPERBAIKI) -->
 			<plugin>
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
 				<version>0.8.12</version>
 				
+				<!-- KONFIGURASI GLOBAL: Rules dipindahkan ke sini agar terbaca oleh default-cli -->
 				<configuration>
 					<includes>
 						<include>org/delcom/app/**/*</include>
@@ -176,6 +177,21 @@
 						<exclude>**/*$MockitoMock*</exclude>
 						<exclude>**/*$*</exclude>
 					</excludes>
+					
+					<!-- Rules diletakkan di Global Configuration -->
+					<rules>
+						<rule>
+							<element>BUNDLE</element>
+							<limits>
+								<!-- Minimal Coverage 10% -->
+								<limit>
+									<counter>LINE</counter>
+									<value>COVEREDRATIO</value>
+									<minimum>0.10</minimum>
+								</limit>
+							</limits>
+						</rule>
+					</rules>
 				</configuration>
 
 				<executions>
@@ -193,27 +209,12 @@
 						</goals>
 					</execution>
 					
-					<!-- INI PERBAIKANNYA: BLOK CHECK DENGAN RULES -->
 					<execution>
 						<id>check</id>
 						<goals>
 							<goal>check</goal>
 						</goals>
-						<configuration>
-							<rules>
-								<rule>
-									<element>BUNDLE</element>
-									<limits>
-										<!-- Minimal Coverage 10% (Pasti lolos karena anda punya 100%) -->
-										<limit>
-											<counter>LINE</counter>
-											<value>COVEREDRATIO</value>
-											<minimum>0.10</minimum>
-										</limit>
-									</limits>
-								</rule>
-							</rules>
-						</configuration>
+						<!-- Configuration dihapus dari sini karena sudah ada di Global -->
 					</execution>
 				</executions>
 			</plugin>
