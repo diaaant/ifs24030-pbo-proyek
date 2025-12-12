@@ -134,7 +134,7 @@
 				</configuration>
 			</plugin>
 
-			<!-- 2. Spring Boot Plugin -->
+			<!-- 2. Spring Boot Plugin (Bypass Scanning) -->
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
@@ -144,7 +144,7 @@
 				</configuration>
 			</plugin>
 
-			<!-- 3. Surefire Plugin -->
+			<!-- 3. Surefire Plugin (Test Runner Config) -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
@@ -164,7 +164,7 @@
 				</configuration>
 			</plugin>
 
-			<!-- 4. JaCoCo Plugin (VERSI FINAL - BERSIH ERROR MOCKITO) -->
+			<!-- 4. JaCoCo Plugin (VERSI FINAL & LENGKAP) -->
 			<plugin>
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
@@ -183,7 +183,6 @@
 						<exclude>**/dto/**</exclude>
 						<exclude>**/configs/**</exclude>
 						<exclude>**/Application.class</exclude>
-						<!-- Filter ini yang paling penting: -->
 						<exclude>**/*$MockitoMock*</exclude>
 						<exclude>**/*$*</exclude>
 					</excludes>
@@ -202,6 +201,28 @@
 						<goals>
 							<goal>report</goal>
 						</goals>
+					</execution>
+					
+					<!-- INI BAGIAN YANG SAYA TAMBAHKAN AGAR GITHUB ACTIONS SUKSES -->
+					<execution>
+						<id>check</id>
+						<goals>
+							<goal>check</goal>
+						</goals>
+						<configuration>
+							<rules>
+								<rule>
+									<element>BUNDLE</element>
+									<limits>
+										<limit>
+											<counter>LINE</counter>
+											<value>COVEREDRATIO</value>
+											<minimum>0.10</minimum>
+										</limit>
+									</limits>
+								</rule>
+							</rules>
+						</configuration>
 					</execution>
 				</executions>
 			</plugin>
