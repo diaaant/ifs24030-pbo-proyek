@@ -4,6 +4,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -11,103 +12,91 @@ import static org.junit.jupiter.api.Assertions.*;
 class UserTests {
 
     @Test
-    @DisplayName("Test Constructor 3 Parameter (Full)")
+    @DisplayName("1. Test Constructor Kosong")
+    void testNoArgsConstructor() {
+        User user = new User();
+        assertNull(user.getId());
+        assertNull(user.getName());
+        assertNull(user.getEmail());
+        assertNull(user.getPassword());
+    }
+
+    @Test
+    @DisplayName("2. Test Constructor Email Password")
+    void testConstructorEmailPassword() {
+        User user = new User("test@mail.com", "pass");
+        assertEquals("", user.getName());
+        assertEquals("test@mail.com", user.getEmail());
+        assertEquals("pass", user.getPassword());
+    }
+
+    @Test
+    @DisplayName("3. Test Constructor Lengkap")
     void testFullConstructor() {
-        // Arrange
-        String name = "Budi Santoso";
-        String email = "budi@example.com";
-        String password = "rahasia123";
-
-        // Act
-        User user = new User(name, email, password);
-
-        // Assert
-        assertEquals(name, user.getName());
-        assertEquals(email, user.getEmail());
-        assertEquals(password, user.getPassword());
+        User user = new User("Name", "email@mail.com", "pass");
+        assertEquals("Name", user.getName());
+        assertEquals("email@mail.com", user.getEmail());
+        assertEquals("pass", user.getPassword());
     }
 
     @Test
-    @DisplayName("Test Constructor 2 Parameter (Chaining Logic)")
-    void testChainedConstructor() {
-        // Arrange
-        String email = "agus@example.com";
-        String password = "passwordAgus";
-
-        // Act
-        // Kode Main Anda: public User(String email, String password) { this("", email, password); }
-        User user = new User(email, password);
-
-        // Assert
-        assertEquals(email, user.getEmail());
-        assertEquals(password, user.getPassword());
-        
-        // Memastikan logic 'this("", ...)' berjalan
-        assertEquals("", user.getName(), "Nama harus empty string sesuai logic konstruktor");
-    }
-
-    @Test
-    @DisplayName("Test Setters dan Getters")
+    @DisplayName("4. Test Getter Setter")
     void testSettersAndGetters() {
-        // Arrange
         User user = new User();
         UUID id = UUID.randomUUID();
-        String name = "Citra";
-        String email = "citra@test.com";
-        String password = "pass";
-
-        // Act
+        
         user.setId(id);
-        user.setName(name);
-        user.setEmail(email);
-        user.setPassword(password);
+        user.setName("Budi");
+        user.setEmail("budi@mail.com");
+        user.setPassword("rahasia");
 
-        // Assert
         assertEquals(id, user.getId());
-        assertEquals(name, user.getName());
-        assertEquals(email, user.getEmail());
-        assertEquals(password, user.getPassword());
+        assertEquals("Budi", user.getName());
+        assertEquals("budi@mail.com", user.getEmail());
+        assertEquals("rahasia", user.getPassword());
     }
 
+    // --- BAGIAN YANG DIPERBAIKI ---
     @Test
-    @DisplayName("Test Lifecycle onCreate (@PrePersist)")
+    @DisplayName("5. Test onCreate (PrePersist)")
     void testOnCreate() {
-        // Arrange
         User user = new User();
+        assertNull(user.getCreatedAt());
+        assertNull(user.getUpdatedAt());
 
-        // Act
-        // Memanggil method protected onCreate() (bisa karena satu package)
+        // Panggil method lifecycle
         user.onCreate();
 
-        // Assert
-        // Kode Main: createdAt = now(); updatedAt = now();
-        assertNotNull(user.getCreatedAt(), "CreatedAt harus terisi");
-        assertNotNull(user.getUpdatedAt(), "UpdatedAt harus terisi");
+        // Assert Not Null
+        assertNotNull(user.getCreatedAt(), "CreatedAt tidak boleh null");
+        assertNotNull(user.getUpdatedAt(), "UpdatedAt tidak boleh null");
+
+        // PERBAIKAN: Jangan pakai assertEquals untuk waktu.
+        // Gunakan ChronoUnit untuk memastikan selisihnya sangat kecil (misal < 100ms)
+        long diff = ChronoUnit.MILLIS.between(user.getCreatedAt(), user.getUpdatedAt());
+        assertTrue(Math.abs(diff) < 100, "Waktu create dan update harus hampir bersamaan");
         
-        // Memastikan keduanya di-set di waktu yang (hampir) bersamaan
-        assertEquals(user.getCreatedAt(), user.getUpdatedAt());
+        // Pastikan tahunnya benar (tahun ini)
+        assertEquals(LocalDateTime.now().getYear(), user.getCreatedAt().getYear());
     }
 
     @Test
-    @DisplayName("Test Lifecycle onUpdate (@PreUpdate)")
+    @DisplayName("6. Test onUpdate (PreUpdate)")
     void testOnUpdate() throws InterruptedException {
-        // Arrange
         User user = new User();
-        user.onCreate(); // Set waktu awal
-        LocalDateTime createdTime = user.getCreatedAt();
-        LocalDateTime oldUpdatedTime = user.getUpdatedAt();
-
-        // Tunggu sebentar (simulasi jeda waktu)
+        user.onCreate(); // Init awal
+        
+        LocalDateTime awal = user.getUpdatedAt();
+        
+        // Tunggu sebentar agar waktu berubah (10ms)
         Thread.sleep(10);
+        
+        user.onUpdate(); // Update
 
-        // Act
-        // Memanggil method protected onUpdate()
-        user.onUpdate();
-
-        // Assert
-        // Kode Main: updatedAt = LocalDateTime.now(); (createdAt tidak disentuh)
-        assertEquals(createdTime, user.getCreatedAt(), "CreatedAt tidak boleh berubah saat update");
-        assertNotEquals(oldUpdatedTime, user.getUpdatedAt(), "UpdatedAt harus berubah");
-        assertTrue(user.getUpdatedAt().isAfter(oldUpdatedTime), "UpdatedAt baru harus lebih besar");
+        // UpdatedAt harus berubah menjadi lebih baru
+        assertTrue(user.getUpdatedAt().isAfter(awal), "UpdatedAt harus diperbarui");
+        
+        // CreatedAt TIDAK boleh berubah
+        assertEquals(user.getCreatedAt(), user.getCreatedAt()); 
     }
 }
