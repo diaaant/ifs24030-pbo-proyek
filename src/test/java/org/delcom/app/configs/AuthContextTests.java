@@ -1,32 +1,47 @@
 package org.delcom.app.configs;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import org.delcom.app.entities.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-public class AuthContextTests {
+import static org.junit.jupiter.api.Assertions.*;
+
+class AuthContextTests {
+
     @Test
-    @DisplayName("Membuat instance kelas AuthContext dengan benar")
-    void testMembuatInstanceKelasAuthContextDenganBenar() {
+    @DisplayName("Test default state (Not Authenticated)")
+    void testDefaultState() {
         AuthContext authContext = new AuthContext();
+        assertNull(authContext.getAuthUser());
+        assertFalse(authContext.isAuthenticated());
+    }
 
-        // Menguji dengan data user tersedia
-        {
-            User user = new User("Abdullah Ubaid", "test@example.com", "123456");
-            authContext.setAuthUser(user);
+    @Test
+    @DisplayName("Test setAuthUser dan isAuthenticated (Authenticated)")
+    void testSetUserAndAuthentication() {
+        AuthContext authContext = new AuthContext();
+        
+        // REVISI: Pakai objek asli, jangan di-mock
+        User realUser = new User();
+        realUser.setName("Test User");
 
-            assertEquals(user, authContext.getAuthUser());
-            assertTrue(authContext.isAuthenticated());
-        }
+        authContext.setAuthUser(realUser);
 
-        // Menguji dengan data user kosong
-        {
-            authContext.setAuthUser(null);
-            assertTrue(!authContext.isAuthenticated());
-        }
+        assertEquals(realUser, authContext.getAuthUser());
+        assertTrue(authContext.isAuthenticated());
+    }
 
+    @Test
+    @DisplayName("Test setAuthUser kembali ke null (Logout scenario)")
+    void testSetUserToNull() {
+        AuthContext authContext = new AuthContext();
+        authContext.setAuthUser(new User()); // Pakai objek asli
+        
+        assertTrue(authContext.isAuthenticated());
+
+        authContext.setAuthUser(null);
+
+        assertNull(authContext.getAuthUser());
+        assertFalse(authContext.isAuthenticated());
     }
 }

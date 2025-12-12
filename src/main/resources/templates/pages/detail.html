@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layouts/base}">
+<head>
+    <title>Detail Perjalanan</title>
+</head>
+<body>
+<div layout:fragment="content" class="container mt-5">
+    <!-- Tombol Kembali -->
+    <a th:href="@{/}" class="btn btn-outline-secondary mb-3">&larr; Kembali ke Dashboard</a>
+    
+    <div class="row">
+        <!-- Kolom Gambar -->
+        <div class="col-md-5">
+            <div class="card shadow-sm">
+                <!-- Gambar Utama dengan Error Handling jika gambar rusak -->
+                <img th:src="@{'/images/' + ${log.imagePath}}" class="card-img-top" alt="Detail Foto"
+                     style="height: 350px; object-fit: cover;"
+                     onerror="this.src='https://via.placeholder.com/400?text=No+Image'">
+                
+                <div class="card-body text-center">
+                    <!-- Tombol Ganti Foto (Fitur No. 4) -->
+                    <button class="btn btn-warning w-100" data-bs-toggle="modal" data-bs-target="#editImageModal">
+                        📸 Ganti Foto Kenangan
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Kolom Info Detail -->
+        <div class="col-md-7">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0" th:text="${log.title}">Judul Perjalanan</h3>
+                </div>
+                <div class="card-body">
+                    <h5 class="text-muted mb-3">📍 <span th:text="${log.destination}">Lokasi</span></h5>
+                    
+                    <div class="p-3 bg-light rounded mb-3">
+                        <strong>Cerita Perjalanan:</strong>
+                        <p class="lead mt-2" th:text="${log.description}">Deskripsi lengkap...</p>
+                    </div>
+                    
+                    <hr>
+                    <div class="row text-center">
+                        <div class="col-6 border-end">
+                            <small class="text-muted">Total Biaya</small><br>
+                            <span class="fs-4 text-success fw-bold">Rp <span th:text="${#numbers.formatDecimal(log.totalCost, 0, 'COMMA', 0, 'POINT')}"></span></span>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Rating</small><br>
+                            <span class="fs-4 text-warning">★ <span th:text="${log.rating}"></span>/5</span>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="text-end text-muted">
+                        <small>Dibuat pada: <span th:text="${#temporals.format(log.createdAt, 'dd MMMM yyyy, HH:mm')}"></span></small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL GANTI GAMBAR (Pop-up) -->
+    <div class="modal fade" id="editImageModal" tabindex="-1">
+        <div class="modal-dialog">
+            <form th:action="@{/logs/image}" method="post" enctype="multipart/form-data" th:object="${editForm}">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Ganti Foto</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- ID Hidden -->
+                        <input type="hidden" name="id" th:value="${log.id}">
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Pilih Foto Baru</label>
+                            <input type="file" name="imageFile" class="form-control" required accept="image/*">
+                            <small class="text-muted">Format: JPG, PNG (Max 5MB)</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary">Upload & Simpan</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

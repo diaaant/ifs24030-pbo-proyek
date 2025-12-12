@@ -12,34 +12,33 @@ public class StartupInfoLogger implements ApplicationListener<ApplicationReadyEv
     public void onApplicationEvent(ApplicationReadyEvent event) {
         Environment env = event.getApplicationContext().getEnvironment();
 
+        // 1. Ambil Port (Default 8080)
         String port = env.getProperty("server.port", "8080");
-        String contextPath = env.getProperty("server.servlet.context-path", "/");
-        if (contextPath == null) {
-            contextPath = "";
-        } else if (contextPath.equals("/")) {
+
+        // 2. Ambil Context Path & Normalisasi (Agar tidak null)
+        String contextPath = env.getProperty("server.servlet.context-path");
+        if (contextPath == null || contextPath.isBlank() || contextPath.equals("/")) {
             contextPath = "";
         }
 
-        // Deteksi LiveReload dari DevTools
-        boolean liveReloadEnabled = env.getProperty("spring.devtools.livereload.enabled", Boolean.class, false);
-        String liveReloadPort = env.getProperty("spring.devtools.livereload.port", "35729");
+        // 3. Tentukan HTTP/HTTPS (Cek keberadaan SSL Key Store)
+        String protocol = "http";
+        if (env.getProperty("server.ssl.key-store") != null) {
+            protocol = "https";
+        }
 
-        // Ambil host (default localhost)
-        String host = env.getProperty("server.address", "localhost");
-
-        // Warna ANSI untuk konsol
+        // 4. Warna Terminal (Agar output cantik)
         String GREEN = "\u001B[32m";
         String CYAN = "\u001B[36m";
-        String YELLOW = "\u001B[33m";
         String RESET = "\u001B[0m";
+        String BOLD = "\u001B[1m";
 
-        System.out.println();
-        System.out.println(GREEN + "Application started successfully!" + RESET);
-        System.out.println(CYAN + "> URL: http://" + host + ":" + port + contextPath + RESET);
-        System.out.println(
-                liveReloadEnabled
-                        ? (YELLOW + "> LiveReload: ENABLED (port " + liveReloadPort + ")" + RESET)
-                        : (YELLOW + "> LiveReload: DISABLED" + RESET));
-        System.out.println();
+        // 5. Cetak Output ke Terminal
+        System.out.println("\n" + "----------------------------------------------------------");
+        System.out.println(GREEN + BOLD + "   Aplikasi Berhasil Dijalankan! 🚀" + RESET);
+        System.out.println("----------------------------------------------------------");
+        // Baris ini yang dicek oleh Unit Test
+        System.out.println("   👉 Link:   " + CYAN + protocol + "://localhost:" + port + contextPath + RESET);
+        System.out.println("----------------------------------------------------------\n");
     }
 }

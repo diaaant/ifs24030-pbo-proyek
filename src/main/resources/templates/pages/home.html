@@ -1,174 +1,170 @@
 <!DOCTYPE html>
-<html
-  xmlns:th="http://www.thymeleaf.org"
-  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-  layout:decorate="~{layouts/base}"
-  lang="id"
->
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Spring Boot Todolist</title>
-  </head>
-  <body>
-    <div layout:fragment="content" class="mt-3">
-      <div class="card">
-        <div class="card-header d-flex">
-          <div class="flex-fill">
-            <h3>Hay, [[${auth.name}]]</h3>
-          </div>
-          <div>
-            <div>
-              <a th:href="@{/auth/logout}" class="btn btn-sm btn-danger"
-                >Keluar</a
-              >
-            </div>
-          </div>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layouts/base}">
+<head>
+    <title>Dashboard - My Travel Journal</title>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<div layout:fragment="content" class="container mt-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>✈️ My Travel Journal</h2>
+            <p class="text-muted">Halo, <span th:text="${auth.name}">User</span>! Simpan kenangan perjalananmu.</p>
         </div>
-        <div class="card-body">
-          <div class="d-flex mb-2">
-            <div class="flex-fill">
-              <h3>Daftar Todo List</h3>
-            </div>
-            <div>
-              <button
-                class="btn btn-primary"
-                data-bs-toggle="modal"
-                data-bs-target="#addTodoModal"
-              >
-                Tambah Todo
-              </button>
-            </div>
-          </div>
-          <table class="table table-striped">
-            <tr class="table-light">
-              <th>No</th>
-              <th>Judul</th>
-              <th>Dibuat pada</th>
-              <th>Diubah pada</th>
-              <th>Status</th>
-              <th>Tindakan</th>
-            </tr>
-
-            <tr th:each="todo, status : ${todos}">
-              <td th:text="${status.index + 1}"></td>
-              <td th:text="${todo.title}"></td>
-              <td
-                th:text="${#temporals.format(todo.createdAt, 'd MMMM yyyy, HH:mm')}"
-              ></td>
-              <td
-                th:text="${#temporals.format(todo.updatedAt, 'd MMMM yyyy, HH:mm')}"
-              ></td>
-              <td>
-                <span th:if="${todo.finished}" class="badge bg-success"
-                  >Selesai</span
-                >
-                <span th:unless="${todo.finished}" class="badge bg-danger"
-                  >Belum selesai</span
-                >
-              </td>
-              <td>
-                <a
-                  th:href="@{/todos/{todoId}(todoId=${todo.id})}"
-                  class="btn btn-sm btn-info"
-                >
-                  Detail
-                </a>
-                <button
-                  th:id="|editTodoButton_${todo.id}|"
-                  th:attr="onclick=|prepareEditTodo(`${todo.id}`, `${todo.title}`, `${todo.description}`, ${todo.finished})|"
-                  class="btn btn-sm btn-warning"
-                >
-                  Edit
-                </button>
-                <button
-                  th:id="|deleteTodoButton_${todo.id}|"
-                  th:attr="onclick=|prepareDeleteTodo(`${todo.id}`, `${todo.title}`)|"
-                  class="btn btn-sm btn-danger"
-                >
-                  Hapus
-                </button>
-              </td>
-            </tr>
-            <tr th:if="${#lists.isEmpty(todos)}">
-              <td colspan="6" class="text-center">
-                Belum ada data todo yang tersedia.
-              </td>
-            </tr>
-          </table>
+        <div>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal">+ Tambah Jurnal</button>
+            <a th:href="@{/auth/logout}" class="btn btn-outline-danger">Keluar</a>
         </div>
-      </div>
-
-      <!-- Modals -->
-      <div th:replace="~{models/todos/add :: addTodoModal}"></div>
-      <div th:replace="~{models/todos/edit :: editTodoModal}"></div>
-      <div th:replace="~{models/todos/delete :: deleteTodoModal}"></div>
     </div>
 
-    <!-- Scripts -->
-    <script layout:fragment="others-js">
-      function prepareEditTodo(id, title, description, finished) {
-        /* Set nilai pada form edit */
-        document.getElementById("editTodoId").value = id;
-        document.getElementById("editTodoTitle").value = title;
-        document.getElementById("editTodoDescription").value = description;
-        document.getElementById("editTodoFinished").value = finished
-          ? "1"
-          : "0";
+    <!-- Bagian Chart (Fitur No. 8) -->
+    <!-- Chart hanya muncul jika ada data -->
+    <div class="card mb-4 shadow-sm" th:if="${not #lists.isEmpty(logs)}">
+        <div class="card-body">
+            <h5 class="card-title">Statistik Pengeluaran Wisata</h5>
+            <div style="height: 300px;">
+                <canvas id="travelChart"></canvas>
+            </div>
+        </div>
+    </div>
 
-        /* Tampilkan modal */
-        var editModal = new bootstrap.Modal(
-          document.getElementById("editTodoModal")
-        );
-        editModal.show();
-      }
+    <!-- Pencarian & Tombol Reset (PERBAIKAN 1) -->
+    <form action="/" method="get" class="mb-4">
+        <div class="input-group">
+            <input type="text" name="search" class="form-control" 
+                   th:value="${param.search}" 
+                   placeholder="Cari berdasarkan judul atau lokasi...">
+            
+            <button class="btn btn-secondary" type="submit">Cari</button>
+            
+            <!-- Tombol Reset: Muncul hanya jika sedang mencari -->
+            <a th:if="${param.search != null}" th:href="@{/}" class="btn btn-danger">
+                X Reset
+            </a>
+        </div>
+    </form>
 
-      function prepareDeleteTodo(id, title) {
-        /* Set nilai pada form delete */
-        document.getElementById("deleteTodoId").value = id;
-        document.getElementById("deleteTodoTitle").innerText = title;
+    <!-- Daftar Jurnal (Grid Card) -->
+    <div class="row">
+        <div th:each="log : ${logs}" class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <!-- Gambar Thumbnail -->
+                <img th:src="@{'/images/' + ${log.imagePath}}" class="card-img-top" alt="Foto Wisata" 
+                     style="height: 200px; object-fit: cover;" onerror="this.src='https://via.placeholder.com/300?text=No+Image'">
+                
+                <div class="card-body">
+                    <h5 class="card-title" th:text="${log.title}">Judul</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">📍 <span th:text="${log.destination}">Lokasi</span></h6>
+                    <p class="card-text text-truncate" th:text="${log.description}">Deskripsi singkat...</p>
+                    
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <span class="badge bg-success">Rp <span th:text="${#numbers.formatDecimal(log.totalCost, 0, 'COMMA', 0, 'POINT')}">0</span></span>
+                        <span class="text-warning">★ <span th:text="${log.rating}">5</span></span>
+                    </div>
+                </div>
+                <div class="card-footer bg-white border-top-0 d-flex justify-content-between">
+                    <a th:href="@{'/logs/' + ${log.id}}" class="btn btn-sm btn-info text-white">Lihat Detail</a>
+                    <a th:href="@{'/logs/delete/' + ${log.id}}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Yakin hapus kenangan ini?')">Hapus</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Pesan Kosong -->
+        <div th:if="${#lists.isEmpty(logs)}" class="col-12 text-center py-5">
+            <h4 class="text-muted">Belum ada jurnal perjalanan. Yuk tambah sekarang!</h4>
+        </div>
+    </div>
 
-        /* Tampilkan modal */
-        var deleteModal = new bootstrap.Modal(
-          document.getElementById("deleteTodoModal")
-        );
-        deleteModal.show();
-      }
+    <!-- MODAL TAMBAH DATA (Fitur No. 2) -->
+    <div class="modal fade" id="addModal" tabindex="-1">
+        <div class="modal-dialog">
+            <form th:action="@{/logs/add}" method="post" enctype="multipart/form-data" th:object="${logForm}">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Tambah Jurnal Baru</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label>Judul Perjalanan</label>
+                            <input type="text" name="title" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label>Lokasi / Destinasi</label>
+                            <input type="text" name="destination" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label>Cerita Pengalaman</label>
+                            <textarea name="description" class="form-control" rows="3"></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label>Total Biaya (Rp)</label>
+                                <input type="number" name="totalCost" class="form-control" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>Rating (1-5)</label>
+                                <input type="number" name="rating" class="form-control" min="1" max="5" value="5">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label>Upload Foto Kenangan</label>
+                            <input type="file" name="imageFile" class="form-control" accept="image/*">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary">Simpan</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
-      document.addEventListener("DOMContentLoaded", function () {
-        /* Cek apakah modal add perlu dibuka otomatis */
-        var addTodoModalOpen = "[[${addTodoModalOpen}]]" === "true";
-        if (addTodoModalOpen) {
-          var addModal = new bootstrap.Modal(
-            document.getElementById("addTodoModal")
-          );
-          addModal.show();
-        }
+<!-- Script Chart (PERBAIKAN 2: Ditambahkan th:inline="javascript") -->
+<script layout:fragment="others-js" th:inline="javascript">
+    /* Mengambil data dari Java Controller dengan aman */
+    const rawLabels = /*[[${chartDataLabels}]]*/ [];
+    const rawData = /*[[${chartDataValues}]]*/ [];
 
-        /* Cek apakah modal edit perlu dibuka otomatis */
-        var editTodoModalOpen = "[[${editTodoModalOpen}]]" === "true";
-        if (editTodoModalOpen) {
-          const editTodoModalId = "[[${editTodoModalId}]]";
-          const buttonEdit = document.getElementById(
-            `editTodoButton_${editTodoModalId}`
-          );
-          if (buttonEdit) {
-            buttonEdit.click();
-          }
-        }
-
-        /* Cek apakah modal delete perlu dibuka otomatis */
-        var deleteTodoModalOpen = "[[${deleteTodoModalOpen}]]" === "true";
-        if (deleteTodoModalOpen) {
-          const deleteTodoModalId = "[[${deleteTodoModalId}]]";
-          const buttonDelete = document.getElementById(
-            `deleteTodoButton_${deleteTodoModalId}`
-          );
-          if (buttonDelete) {
-            buttonDelete.click();
-          }
-        }
-      });
-    </script>
-  </body>
+    /* Pastikan element canvas ada sebelum menggambar */
+    const ctxElement = document.getElementById('travelChart');
+    
+    if (ctxElement && rawLabels.length > 0) {
+        const ctx = ctxElement.getContext('2d');
+        
+        new Chart(ctx, {
+            type: 'bar', // Bisa diganti 'pie' atau 'line'
+            data: {
+                labels: rawLabels, // Nama Lokasi (Sumbu X)
+                datasets: [{
+                    label: 'Total Pengeluaran (Rp)',
+                    data: rawData, // Total Biaya (Sumbu Y)
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            // Format angka rupiah di chart (opsional)
+                            callback: function(value) {
+                                return 'Rp ' + value.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+</script>
+</body>
 </html>

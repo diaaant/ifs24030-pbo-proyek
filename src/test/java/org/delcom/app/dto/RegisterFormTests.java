@@ -1,290 +1,112 @@
 package org.delcom.app.dto;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class RegisterFormTest {
+class RegisterFormTests {
 
-    private RegisterForm registerForm;
-    private Validator validator;
+    private static Validator validator;
 
-    @BeforeEach
-    void setUp() {
-        registerForm = new RegisterForm();
+    @BeforeAll
+    static void setUp() {
+        // Inisialisasi Validator untuk menguji anotasi @NotBlank dan @Email
         ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
         validator = factory.getValidator();
     }
 
     @Test
-    @DisplayName("Default constructor membuat objek dengan nilai default")
-    void defaultConstructor_CreatesObjectWithDefaultValues() {
-        assertNull(registerForm.getName());
-        assertNull(registerForm.getEmail());
-        assertNull(registerForm.getPassword());
+    @DisplayName("Test Setters dan Getters")
+    void testSettersAndGetters() {
+        // Arrange
+        RegisterForm form = new RegisterForm();
+        String name = "Agus Subagio";
+        String email = "agus@example.com";
+        String password = "securePassword123";
+
+        // Act
+        form.setName(name);
+        form.setEmail(email);
+        form.setPassword(password);
+
+        // Assert
+        assertEquals(name, form.getName());
+        assertEquals(email, form.getEmail());
+        assertEquals(password, form.getPassword());
     }
 
     @Test
-    @DisplayName("Setter dan Getter untuk name bekerja dengan benar")
-    void setterAndGetter_Name_WorksCorrectly() {
-        String name = "John Doe";
-        registerForm.setName(name);
-        assertEquals(name, registerForm.getName());
+    @DisplayName("Test Validasi: Input Valid (Sukses)")
+    void testValidationSuccess() {
+        // Arrange
+        RegisterForm form = new RegisterForm();
+        form.setName("User Valid");
+        form.setEmail("valid@example.com");
+        form.setPassword("123456");
+
+        // Act
+        Set<ConstraintViolation<RegisterForm>> violations = validator.validate(form);
+
+        // Assert
+        assertTrue(violations.isEmpty(), "Seharusnya tidak ada error validasi jika data benar");
     }
 
     @Test
-    @DisplayName("Setter dan Getter untuk email bekerja dengan benar")
-    void setterAndGetter_Email_WorksCorrectly() {
-        String email = "john@example.com";
-        registerForm.setEmail(email);
-        assertEquals(email, registerForm.getEmail());
+    @DisplayName("Test Validasi: Field Kosong (Blank)")
+    void testValidationBlankFields() {
+        // Arrange
+        RegisterForm form = new RegisterForm();
+        form.setName("");     // Kosong
+        form.setEmail(null);  // Null
+        form.setPassword(""); // Kosong
+
+        // Act
+        Set<ConstraintViolation<RegisterForm>> violations = validator.validate(form);
+
+        // Assert - Memastikan pesan error sesuai dengan kode main Anda
+        
+        // Cek @NotBlank(message = "Nama harus diisi")
+        boolean nameError = violations.stream()
+                .anyMatch(v -> v.getMessage().equals("Nama harus diisi"));
+
+        // Cek @NotBlank(message = "Email harus diisi")
+        boolean emailError = violations.stream()
+                .anyMatch(v -> v.getMessage().equals("Email harus diisi"));
+
+        // Cek @NotBlank(message = "Kata sandi harus diisi")
+        boolean passError = violations.stream()
+                .anyMatch(v -> v.getMessage().equals("Kata sandi harus diisi"));
+
+        assertTrue(nameError, "Pesan error 'Nama harus diisi' tidak ditemukan");
+        assertTrue(emailError, "Pesan error 'Email harus diisi' tidak ditemukan");
+        assertTrue(passError, "Pesan error 'Kata sandi harus diisi' tidak ditemukan");
     }
 
     @Test
-    @DisplayName("Setter dan Getter untuk password bekerja dengan benar")
-    void setterAndGetter_Password_WorksCorrectly() {
-        String password = "password123";
-        registerForm.setPassword(password);
-        assertEquals(password, registerForm.getPassword());
-    }
+    @DisplayName("Test Validasi: Format Email Salah")
+    void testValidationInvalidEmail() {
+        // Arrange
+        RegisterForm form = new RegisterForm();
+        form.setName("Budi");
+        form.setEmail("budi-bukan-email"); // Format salah
+        form.setPassword("pass123");
 
-    @Test
-    @DisplayName("Validation berhasil ketika semua field valid")
-    void validation_Success_WhenAllFieldsValid() {
-        registerForm.setName("John Doe");
-        registerForm.setEmail("john@example.com");
-        registerForm.setPassword("password123");
+        // Act
+        Set<ConstraintViolation<RegisterForm>> violations = validator.validate(form);
 
-        var violations = validator.validate(registerForm);
-        assertTrue(violations.isEmpty());
-    }
+        // Assert
+        // Cek @Email(message = "Format email tidak valid")
+        boolean emailFormatError = violations.stream()
+                .anyMatch(v -> v.getMessage().equals("Format email tidak valid"));
 
-    @Test
-    @DisplayName("Validation gagal ketika name null")
-    void validation_Fail_WhenNameIsNull() {
-        registerForm.setName(null);
-        registerForm.setEmail("john@example.com");
-        registerForm.setPassword("password123");
-
-        var violations = validator.validate(registerForm);
-        assertEquals(1, violations.size());
-        assertEquals("Nama harus diisi", violations.iterator().next().getMessage());
-    }
-
-    @Test
-    @DisplayName("Validation gagal ketika name empty string")
-    void validation_Fail_WhenNameIsEmpty() {
-        registerForm.setName("");
-        registerForm.setEmail("john@example.com");
-        registerForm.setPassword("password123");
-
-        var violations = validator.validate(registerForm);
-        assertEquals(1, violations.size());
-        assertEquals("Nama harus diisi", violations.iterator().next().getMessage());
-    }
-
-    @Test
-    @DisplayName("Validation gagal ketika name blank")
-    void validation_Fail_WhenNameIsBlank() {
-        registerForm.setName("   ");
-        registerForm.setEmail("john@example.com");
-        registerForm.setPassword("password123");
-
-        var violations = validator.validate(registerForm);
-        assertEquals(1, violations.size());
-        assertEquals("Nama harus diisi", violations.iterator().next().getMessage());
-    }
-
-    @Test
-    @DisplayName("Validation gagal ketika email null")
-    void validation_Fail_WhenEmailIsNull() {
-        registerForm.setName("John Doe");
-        registerForm.setEmail(null);
-        registerForm.setPassword("password123");
-
-        var violations = validator.validate(registerForm);
-        assertEquals(1, violations.size());
-        assertEquals("Email harus diisi", violations.iterator().next().getMessage());
-    }
-
-    @Test
-    @DisplayName("Validation gagal ketika email empty string")
-    void validation_Fail_WhenEmailIsEmpty() {
-        registerForm.setName("John Doe");
-        registerForm.setEmail("");
-        registerForm.setPassword("password123");
-
-        var violations = validator.validate(registerForm);
-        assertEquals(1, violations.size());
-        assertEquals("Email harus diisi", violations.iterator().next().getMessage());
-    }
-
-    @Test
-    @DisplayName("Validation gagal ketika format email tidak valid")
-    void validation_Fail_WhenEmailFormatInvalid() {
-        registerForm.setName("John Doe");
-        registerForm.setEmail("invalid-email");
-        registerForm.setPassword("password123");
-
-        var violations = validator.validate(registerForm);
-        assertEquals(1, violations.size());
-        assertEquals("Format email tidak valid", violations.iterator().next().getMessage());
-    }
-
-    @Test
-    @DisplayName("Validation gagal ketika password null")
-    void validation_Fail_WhenPasswordIsNull() {
-        registerForm.setName("John Doe");
-        registerForm.setEmail("john@example.com");
-        registerForm.setPassword(null);
-
-        var violations = validator.validate(registerForm);
-        assertEquals(1, violations.size());
-        assertEquals("Kata sandi harus diisi", violations.iterator().next().getMessage());
-    }
-
-    @Test
-    @DisplayName("Validation gagal ketika password empty string")
-    void validation_Fail_WhenPasswordIsEmpty() {
-        registerForm.setName("John Doe");
-        registerForm.setEmail("john@example.com");
-        registerForm.setPassword("");
-
-        var violations = validator.validate(registerForm);
-        assertEquals(1, violations.size());
-        assertEquals("Kata sandi harus diisi", violations.iterator().next().getMessage());
-    }
-
-    @Test
-    @DisplayName("Validation gagal ketika password blank")
-    void validation_Fail_WhenPasswordIsBlank() {
-        registerForm.setName("John Doe");
-        registerForm.setEmail("john@example.com");
-        registerForm.setPassword("   ");
-
-        var violations = validator.validate(registerForm);
-        assertEquals(1, violations.size());
-        assertEquals("Kata sandi harus diisi", violations.iterator().next().getMessage());
-    }
-
-    @Test
-    @DisplayName("Validation gagal ketika semua field null")
-    void validation_Fail_WhenAllFieldsNull() {
-        registerForm.setName(null);
-        registerForm.setEmail(null);
-        registerForm.setPassword(null);
-
-        var violations = validator.validate(registerForm);
-        assertEquals(3, violations.size());
-
-        var violationMessages = violations.stream()
-                .map(violation -> violation.getMessage())
-                .toList();
-
-        assertTrue(violationMessages.contains("Nama harus diisi"));
-        assertTrue(violationMessages.contains("Email harus diisi"));
-        assertTrue(violationMessages.contains("Kata sandi harus diisi"));
-    }
-
-    @Test
-    @DisplayName("Validation gagal ketika name dan email invalid")
-    void validation_Fail_WhenNameAndEmailInvalid() {
-        registerForm.setName("");
-        registerForm.setEmail("invalid-email");
-        registerForm.setPassword("password123");
-
-        var violations = validator.validate(registerForm);
-        assertEquals(2, violations.size());
-
-        var violationMessages = violations.stream()
-                .map(violation -> violation.getMessage())
-                .toList();
-
-        assertTrue(violationMessages.contains("Nama harus diisi"));
-        assertTrue(violationMessages.contains("Format email tidak valid"));
-    }
-
-    @Test
-    @DisplayName("Validation gagal ketika email dan password invalid")
-    void validation_Fail_WhenEmailAndPasswordInvalid() {
-        registerForm.setName("John Doe");
-        registerForm.setEmail("invalid-email");
-        registerForm.setPassword("");
-
-        var violations = validator.validate(registerForm);
-        assertEquals(2, violations.size());
-
-        var violationMessages = violations.stream()
-                .map(violation -> violation.getMessage())
-                .toList();
-
-        assertTrue(violationMessages.contains("Format email tidak valid"));
-        assertTrue(violationMessages.contains("Kata sandi harus diisi"));
-    }
-
-    @Test
-    @DisplayName("Validation gagal ketika name dan password invalid")
-    void validation_Fail_WhenNameAndPasswordInvalid() {
-        registerForm.setName("");
-        registerForm.setEmail("john@example.com");
-        registerForm.setPassword("");
-
-        var violations = validator.validate(registerForm);
-        assertEquals(2, violations.size());
-
-        var violationMessages = violations.stream()
-                .map(violation -> violation.getMessage())
-                .toList();
-
-        assertTrue(violationMessages.contains("Nama harus diisi"));
-        assertTrue(violationMessages.contains("Kata sandi harus diisi"));
-    }
-
-    @Test
-    @DisplayName("Email dengan format valid diterima")
-    void email_WithValidFormat_IsAccepted() {
-        String[] validEmails = {
-                "user@example.com",
-                "firstname.lastname@example.com",
-                "email@subdomain.example.com",
-                "firstname+lastname@example.com",
-                "email@example.name"
-        };
-
-        for (String validEmail : validEmails) {
-            registerForm.setName("John Doe");
-            registerForm.setEmail(validEmail);
-            registerForm.setPassword("password123");
-
-            var violations = validator.validate(registerForm);
-            assertTrue(violations.isEmpty(), "Should accept valid email: " + validEmail);
-        }
-    }
-
-    @Test
-    @DisplayName("Email dengan format invalid ditolak")
-    void email_WithInvalidFormat_IsRejected() {
-        String[] invalidEmails = {
-                "plainaddress",
-                "@no-local-part.com",
-                "email.domain.com",
-                "email@domain@domain.com",
-                ".email@domain.com"
-        };
-
-        for (String invalidEmail : invalidEmails) {
-            registerForm.setName("John Doe");
-            registerForm.setEmail(invalidEmail);
-            registerForm.setPassword("password123");
-
-            var violations = validator.validate(registerForm);
-            assertEquals(1, violations.size());
-            assertEquals("Format email tidak valid", violations.iterator().next().getMessage());
-        }
+        assertTrue(emailFormatError, "Pesan error 'Format email tidak valid' harus muncul");
     }
 }

@@ -1,56 +1,77 @@
 package org.delcom.app.services;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.util.UUID;
-
 import org.delcom.app.entities.AuthToken;
 import org.delcom.app.repositories.AuthTokenRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class AuthTokenServiceTests {
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class AuthTokenServiceTests {
+
+    @Mock
+    private AuthTokenRepository authTokenRepository;
+
+    @InjectMocks
+    private AuthTokenService authTokenService;
+
     @Test
-    @DisplayName("Berbagai pengujian AuthToken")
-    public void testVariousAuthToken() {
+    @DisplayName("Test Find User Token")
+    void testFindUserToken() {
+        // Arrange
         UUID userId = UUID.randomUUID();
-        AuthToken authToken = new AuthToken(userId, "token");
+        String tokenStr = "sample-jwt-token";
+        AuthToken expectedToken = new AuthToken(userId, tokenStr);
 
-        // Membuat user repository palsu
-        AuthTokenRepository authTokenRepository = Mockito.mock(AuthTokenRepository.class);
+        // Simulasi repository mengembalikan token
+        when(authTokenRepository.findUserToken(userId, tokenStr)).thenReturn(expectedToken);
 
-        // Membuat instance AuthToken dengan repository palsu
-        AuthTokenService authTokenService = new AuthTokenService(authTokenRepository);
-        assertTrue(authTokenService != null);
+        // Act
+        AuthToken result = authTokenService.findUserToken(userId, tokenStr);
 
-        // Menguji createAuthToken
-        {
-            Mockito.when(authTokenRepository.save(Mockito.any(AuthToken.class))).thenReturn(authToken);
+        // Assert
+        assertEquals(expectedToken, result);
+        // Pastikan method repository dipanggil tepat 1 kali
+        verify(authTokenRepository, times(1)).findUserToken(userId, tokenStr);
+    }
 
-            AuthToken result = authTokenService.createAuthToken(authToken);
-            assertTrue(result != null);
-            assertEquals(authToken.getUserId(), result.getUserId());
-            assertEquals(authToken.getToken(), result.getToken());
-        }
+    @Test
+    @DisplayName("Test Create Auth Token")
+    void testCreateAuthToken() {
+        // Arrange
+        AuthToken newToken = new AuthToken(UUID.randomUUID(), "token-baru");
+        
+        // Simulasi repository.save
+        when(authTokenRepository.save(newToken)).thenReturn(newToken);
 
-        // Menguji findUserToken
-        {
-            Mockito.when(authTokenRepository.findUserToken(userId, "token")).thenReturn(authToken);
+        // Act
+        AuthToken result = authTokenService.createAuthToken(newToken);
 
-            AuthToken result = authTokenService.findUserToken(userId, "token");
-            assertTrue(result != null);
-            assertEquals(authToken.getUserId(), result.getUserId());
-            assertEquals(authToken.getToken(), result.getToken());
-        }
+        // Assert
+        assertEquals(newToken, result);
+        verify(authTokenRepository, times(1)).save(newToken);
+    }
 
-        // Menguji deleteAuthToken
-        {
-            Mockito.doNothing().when(authTokenRepository).deleteByUserId(userId);
+    @Test
+    @DisplayName("Test Delete Auth Token")
+    void testDeleteAuthToken() {
+        // Arrange
+        UUID userId = UUID.randomUUID();
 
-            authTokenService.deleteAuthToken(userId);
-            Mockito.verify(authTokenRepository, Mockito.times(1)).deleteByUserId(userId);
-        }
+        // Act
+        // Method ini void, jadi kita hanya memanggilnya
+        authTokenService.deleteAuthToken(userId);
+
+        // Assert
+        // Verifikasi bahwa repository.deleteByUserId dipanggil dengan userId yang benar
+        verify(authTokenRepository, times(1)).deleteByUserId(userId);
     }
 }
