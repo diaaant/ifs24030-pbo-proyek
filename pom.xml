@@ -189,8 +189,11 @@
 					<excludes>
 						<exclude>**/utils/**</exclude>
 						<exclude>**/views/**</exclude>
+						<exclude>**/dto/**</exclude>
 						<exclude>**/configs/**</exclude>
 						<exclude>**/Application.class</exclude>
+						<exclude>**/*$*</exclude>
+						<exclude>**/*$MockitoMock*</exclude>
 					</excludes>
 				</configuration>
 			</plugin>
